@@ -1,6 +1,5 @@
 import { render, screen, waitFor } from "./test-lib/test-utils";
 import App from "./app";
-import { TodoList } from "./components/todo-list";
 import { resetTodos } from "./test-lib/test-server";
 import { aTodo } from "./test-lib/test-builder";
 
@@ -26,9 +25,7 @@ test("start off with a single todo item in the list. When the user marks it as d
         name: /test1/i
       });
     await user.click(btnDone);
-
     const footer = screen.getByRole('contentinfo');
-
     await waitFor(()=> expect(footer).toHaveTextContent('All done!'));
 });
 

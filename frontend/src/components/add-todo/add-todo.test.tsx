@@ -1,5 +1,7 @@
 import { AddTodoForm, isValid } from "./index";
 import { screen, render, waitFor } from "../../test-lib/test-utils";
+import { mswServer } from "../../test-lib/test-server";
+import { rest } from "msw";
 
 test("dummy test", () => {
     expect(1 + 2).toEqual(3);
@@ -27,10 +29,37 @@ it("when pressing enter description should become empty", async()=>{
 
 it("when clicking on addButton description should become empty", async() =>{
     const { user } = render(<AddTodoForm />);
-    //screen.logTestingPlaygroundURL();
     const field = screen.getByRole('textbox', {name: /description/i});
     await user.type(field, "test1");
     const btnAdd = screen.getByRole('button', {name: /add/i});
     await user.click(btnAdd);
     await waitFor(()=>expect(field).toHaveValue(""));
+});
+
+describe("given the user adds a todo, when the server returns an error,", ()=>{
+
+
+    beforeEach(async () => {
+        const { user } = render(<AddTodoForm />);
+        const field = screen.getByRole('textbox', {name: /description/i});
+    
+        mswServer.use(
+        rest.post('/api/todos', (req, response, context)=>{
+            return response(context.status(400), context.json({code:"description_too_long", errorMessage:"Description may not be more than 100 characters"}));
+        })
+        );
+        await user.type(field, "test1{Enter}");    
+    });
+
+    it("then the error message shows up",async () => {
+        await screen.findByText("Description may not be more than 100 characters");
+    });
+            
+
+    it("then description input text is not cleared",async () => {
+        const field = screen.getByRole('textbox', {name: /description/i});
+        await waitFor(()=>expect(field).toHaveValue("test1"));
+    });
+    
+
 });
